@@ -1,6 +1,6 @@
 {
-  "name": "ut-agent-center",
-  "version": "1.0.0",
+  "name": "agent-utry",
+  "version": "1.0.3",
   "description": "远传坐席中心构建工具",
   "main": "dist/js/agent-center.js",
   "index": "dist/js/agent-center.js",
