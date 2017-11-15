@@ -89,7 +89,7 @@
 <script>
 
     import _ from 'lodash';
-    import bus from '../commons/bus';
+//    import bus from '../commons/bus';
     import Drag from '../commons/drag';
 
 
@@ -186,7 +186,7 @@
         },
 
         mounted() {
-
+            let bus = this.$store.state.bus;
             this.popup = this.$refs.popup;
             this.contextMenuPopup = this.$refs.contextMenu;
 
@@ -440,7 +440,7 @@
             zoomToPoint({x, y}, out) {
                 let point = this.getPointByCoords(x, y),
                     {width: viewWidth, height: viewHeight} = this.getClientRect();
-                bus.$emit('focusViewBox', {
+                this.$store.state.bus.$emit('focusViewBox', {
                     left: point.left - 50,
                     top: point.top - 50,
                     right: point.left + 50,
@@ -456,11 +456,11 @@
                 if (this.showSelection) {
                     let items = this.selectedItems || [];
                     if (items.length) {
-                        bus.$emit('focusViewBox', this.getViewBox(), out ? -1 : 1);
+                        this.$store.state.bus.$emit('focusViewBox', this.getViewBox(), out ? -1 : 1);
                         return;
                     }
                 }
-                bus.$emit(out ? 'zoomOut' : 'zoomIn');
+                this.$store.state.bus.$emit(out ? 'zoomOut' : 'zoomIn');
             },
 
             onContextMenu(event) {
@@ -522,7 +522,7 @@
             },
 
             contextMenuClick(item) {
-                bus.$emit('contextMenu', {
+                this.$store.state.bus.$emit('contextMenu', {
                     name: item.value,
                     value: !item.checked
                 });
@@ -558,7 +558,7 @@
                             detail[attr.name] = attr;
                         }
                     }
-                    bus.$once('attrValidation', (valid, detail) => {
+                    this.$store.state.bus.$once('attrValidation', (valid, detail) => {
                         if (valid) {
                             item.transform = transform;
                             item.attributes = attributes;
@@ -632,7 +632,7 @@
                                     dragger.start(event);
                                     this.selectedItems = [item];
                                     this.showSelection = true;
-                                    bus.$emit('itemSelected', item);
+                                    this.$store.state.bus.$emit('itemSelected', item);
                                 } else {
                                     this.movable = false;
                                     dragger.start(event);
@@ -663,7 +663,7 @@
                         } else {
                             this.selectedItems = [item];
                             if (event.type !== 'mouseup') {
-                                bus.$emit('itemSelected', item);
+                                this.$store.state.bus.$emit('itemSelected', item);
                             }
                         }
                         this.showSelection = true;
@@ -834,7 +834,7 @@
             },
 
             move(detail) {
-                bus.$emit('positionChanging', {detail, items: this.selectedItems});
+                this.$store.state.bus.$emit('positionChanging', {detail, items: this.selectedItems});
             }
 
         }

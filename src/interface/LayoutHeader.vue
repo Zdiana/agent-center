@@ -19,8 +19,7 @@
 
 <script>
 
-    import bus from '../commons/bus';
-
+//    import bus from '../commons/bus';
     export default {
 
         name: 'LayoutHeader',
@@ -28,7 +27,7 @@
         props: {
             title: {
                 type: String,
-                default: '远传 · 座位图绘制'
+                default: '座位图绘制'
             },
             buttonBar: {
                 type: Boolean,
@@ -46,10 +45,10 @@
 
         methods: {
             save() {
-                bus.$emit('save');
+                this.$store.state.bus.$emit('save');
             },
             back() {
-                bus.$emit('back');
+                this.$store.state.bus.$emit('back');
             }
         }
 

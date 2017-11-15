@@ -80,7 +80,7 @@
 
 <script>
 
-    import bus from '../commons/bus';
+//    import bus from '../commons/bus';
     import utils from '../commons/utils';
 
     import Vue from 'vue';
@@ -163,7 +163,7 @@
                 this.confirmDisplay = 'none';
             },
             openPackage(item) {
-                bus.$emit('openPackage', item);
+                this.$store.state.bus.$emit('openPackage', item);
             },
             showConfirm(item) {
                 this.deleteItem = item;

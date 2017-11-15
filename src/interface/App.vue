@@ -1,5 +1,5 @@
 <template>
-    <div class="app-root-elem" id="agent-center-app-root-elem">
+    <div class="app-root-elem" :id="id">
         <Layout :header="appHeader"
                 :toolbox="appToolbox"
                 :packageName="packageName"
@@ -78,12 +78,10 @@
     import _ from 'lodash';
     import axios from 'axios';
 
-    import bus from '../commons/bus';
 
     if (!window.Vuex) {
         Vue.use(Vuex);
     }
-
     class DraftStorage {
 
         static key = '_CURRENT_AGENT_LAYOUT_DATA_DRAFT_';
@@ -220,141 +218,8 @@
 
     const storage = new DraftStorage();
 
-    const defaultState = {
-        structsMap: {},
-        structsList: [],
-        packages: [],
-        currentPackage: null,
-        draft: false,
-        viewOffset: {
-            left: 0,
-            top: 0,
-            animate: true
-        },
-        ratio: 2,
-        modalMaskIndex: 0
-    };
 
-    let draft = DraftStorage.get();
-
-    if (draft) {
-        defaultState.packages = draft;
-    }
-
-    const store = new Vuex.Store({
-        state: defaultState,
-        mutations: {
-            showMask(state, index) {
-                state.modalMaskIndex = +index || 1000;
-            },
-            hideMask(state) {
-                state.modalMaskIndex = 0;
-            },
-            addStruct(state, struct) {
-                state.structsMap[struct.id] = struct;
-                state.structsList.push(struct);
-                bus.$emit('addStruct', struct);
-                state.draft = storage.update(state);
-            },
-            removeStruct(state, struct) {
-                let id = struct.id,
-                    list = state.structsList,
-                    length = list.length;
-                while (length--) {
-                    if (list[length].id === id) {
-                        list.splice(length, 1);
-                        break;
-                    }
-                }
-                delete state.structsMap[id];
-                bus.$emit('removeStruct', struct);
-                state.draft = storage.update(state);
-            },
-            setDraft(state, draft) {
-                state.draft = !!draft;
-            },
-            reset(state) {
-                state.draft = storage.save(state);
-                clearState(state);
-                state.packages = storage.packages;
-                bus.$emit('reset');
-            },
-            setOffset(state, {left, top, animate}) {
-                let offset = state.viewOffset;
-                if (!isNaN(left = +left)) {
-                    offset.left = left;
-                }
-                if (!isNaN(top = +top)) {
-                    offset.top = top;
-                }
-                if (animate != void 0) {
-                    offset.animate = !!animate;
-                }
-                state.draft = storage.update(state);
-            },
-            setRatio(state, ratio) {
-                state.ratio = ratio;
-                if (state.currentPackage) {
-                    state.currentPackage.ratio = ratio;
-                }
-                state.draft = storage.update(state);
-            },
-            addPackage(state, pack) {
-                state.packages.unshift({
-                    ...pack,
-                    items: [],
-                    offset: {left: 0, top: 0},
-                    ratio: 2
-                });
-                state.draft = storage.save(state);
-                state.packages = storage.packages;
-                bus.$emit('addPackage', pack);
-            },
-            removePackage(state, pack) {
-                let id = pack ? pack.id : '',
-                    items = state.packages,
-                    deletedItem;
-                if (id) {
-                    items.forEach((item, index) => {
-                        if (item.id === id) {
-                            deletedItem = item;
-                            items.splice(index, 1);
-                        }
-                    });
-                    state.draft = storage.save(state);
-                    state.packages = storage.packages;
-                    bus.$emit('removePackage', deletedItem);
-                }
-            },
-            setPackage(state, pack) {
-                state.structsList = [];
-                state.structsMap = {};
-                state.modalMaskIndex = 0;
-                state.viewOffset = (pack.offset || {
-                    left: 0,
-                    top: 0
-                });
-                state.viewOffset.animate = true;
-                state.ratio = pack.ratio || 2;
-                bus.$emit('packageOpen', pack.items);
-                pack.items = state.structsList;
-                pack.offset = state.viewOffset;
-                state.currentPackage = pack;
-                bus.$once('packageOpened', () => {
-                    state.draft = storage.isUpdated();
-                });
-            },
-            setPackages(state, packages) {
-                if (Array.isArray(packages)) {
-                    state.packages = packages;
-                }
-            }
-        },
-        actions: {},
-        getters: {}
-    });
-
-    function clearState(state) {
+    function clearState(state,flag) {
         if (state) {
             state.structsList = [];
             state.structsMap = {};
@@ -368,102 +233,262 @@
             state.draft = false;
             state.ratio = 2;
             state.packages = [];
+            if(flag){
+                state.bus=null;
+            }
         }
     }
-
-    const AgentAppPopup = Vue.component('AgentAppPopup', {
-        'extends': Popup,
-        created() {
-            this.$store = store;
-            if (!this.$el) {
-                let root = document.getElementById('agent-center-app-root-elem');
-                root = (root || document.body).appendChild(document.createElement('div'));
-                this.$mount(root);
-            }
-        }
-    });
-
-    Vue.component('AgentAppModal', {
-        'extends': AgentAppPopup,
-        props: {
-            modal: {
-                type: Boolean,
-                default: true
-            },
-            animationDuration: {
-                type: String,
-                default: '300ms'
-            }
-        }
-    });
-
-    Vue.component('AgentAppTips', {
-        'extends': AgentAppPopup,
-        props: {
-            position: {
-                type: Object,
-                default: () => ({top: 70})
-            },
-            message: {
-                type: String,
-                default: ''
-            },
-            icon: {
-                type: String,
-                default: ''
-            },
-            minHeight: {
-                type: String,
-                default: '10px'
-            },
-            zIndex: {
-                type: Number,
-                default: 3000
-            }
-        },
-        watch: {
-            content() {
-                this.setContent();
-            },
-            icon() {
-                this.setContent();
-            }
-        },
-        methods: {
-            setContent() {
-                let {content, icon, maxWidth, maxHeight, minWidth, minHeight, padding, textAlign} = this;
-                this.html = `
-                    <div class="app-tips-wrap" style="max-width:${maxWidth};max-height:${maxHeight};min-width:${minWidth};min-height:${minHeight};padding:${padding};text-align:${textAlign}">
-                        ${icon ? `<i class="app-tips-icon icon-${icon}"></i>` : ''}
-                        <div class="app-tips-txt">${content}</div>
-                    </div>`;
-            }
-        },
-        mounted() {
-            this.setContent();
-        }
-    });
-
     const props = [
         'fetch', 'persist',
         'structureItems', 'structureImagePath',
         'header', 'toolbox', 'title', 'grid', 'movable', 'editable', 'freeDrop',
         'gridLine', 'gridRuleLine', 'gridRuleLineColor', 'gridRuleAreaColor', 'gridRuleAreaFlash',
-        'zoomAnimationDuration', 'contextMenu', 'getItemTitle'
+        'zoomAnimationDuration', 'contextMenu', 'getItemTitle','id'
     ];
 
     export default {
 
-        name: 'App',
+        name: 'AgentApp',
 
         __props: [...props],
 
         components: {Layout, LayoutHeader, Toolbox, Index, LayoutMain, FuncBar, ModalMask, Popup},
-
-        store,
-
         props,
+        beforeCreate:function(){
+            let tmpid= this.$options.props.id.default;
 
+            const defaultState = {
+                structsMap: {},
+                structsList: [],
+                packages: [],
+                currentPackage: null,
+                draft: false,
+                viewOffset: {
+                    left: 0,
+                    top: 0,
+                    animate: true
+                },
+                ratio: 2,
+                modalMaskIndex: 0,
+                bus:new Vue(),
+                hasWatch:true
+            };
+
+            let draft = DraftStorage.get();
+
+            if (draft) {
+                defaultState.packages = draft;
+            }
+            function createStore(){
+                let store = new Vuex.Store({
+                    state: defaultState,
+                    mutations: {
+                        showMask(state, index) {
+                            state.modalMaskIndex = +index || 1000;
+                        },
+                        hideMask(state) {
+                            state.modalMaskIndex = 0;
+                        },
+                        addStruct(state, struct) {
+                            state.structsMap[struct.id] = struct;
+                            state.structsList.push(struct);
+                            state.bus.$emit('addStruct', struct);
+                            state.draft = storage.update(state);
+                        },
+                        removeStruct(state, struct) {
+                            let id = struct.id,
+                                list = state.structsList,
+                                length = list.length;
+                            while (length--) {
+                                if (list[length].id === id) {
+                                    list.splice(length, 1);
+                                    break;
+                                }
+                            }
+                            delete state.structsMap[id];
+                            state.bus.$emit('removeStruct', struct);
+                            state.draft = storage.update(state);
+                        },
+                        setDraft(state, draft) {
+                            state.draft = !!draft;
+                        },
+                        reset(state) {
+                            state.draft = storage.save(state);
+                            let bus = state.bus;
+                            clearState(state);
+                            state.packages = storage.packages;
+                            bus.$emit('reset');
+                        },
+                        setOffset(state, {left, top, animate}) {
+                            let offset = state.viewOffset;
+                            if (!isNaN(left = +left)) {
+                                offset.left = left;
+                            }
+                            if (!isNaN(top = +top)) {
+                                offset.top = top;
+                            }
+                            if (animate != void 0) {
+                                offset.animate = !!animate;
+                            }
+                            state.draft = storage.update(state);
+                        },
+                        setRatio(state, ratio) {
+                            state.ratio = ratio;
+                            if (state.currentPackage) {
+                                state.currentPackage.ratio = ratio;
+                            }
+                            state.draft = storage.update(state);
+                        },
+                        addPackage(state, pack) {
+                            state.packages.unshift({
+                                ...pack,
+                                items: [],
+                                offset: {left: 0, top: 0},
+                                ratio: 2
+                            });
+                            state.draft = storage.save(state);
+                            state.packages = storage.packages;
+                            state.bus.$emit('addPackage', pack);
+                        },
+                        removePackage(state, pack) {
+                            let id = pack ? pack.id : '',
+                                items = state.packages,
+                                deletedItem;
+                            if (id) {
+                                items.forEach((item, index) => {
+                                    if (item.id === id) {
+                                        deletedItem = item;
+                                        items.splice(index, 1);
+                                    }
+                                });
+                                state.draft = storage.save(state);
+                                state.packages = storage.packages;
+                                state.bus.$emit('removePackage', deletedItem);
+                            }
+                        },
+                        setPackage(state, pack) {
+                            state.structsList = [];
+                            state.structsMap = {};
+                            state.modalMaskIndex = 0;
+                            state.viewOffset = (pack.offset || {
+                                left: 0,
+                                top: 0
+                            });
+                            state.viewOffset.animate = true;
+                            state.ratio = pack.ratio || 2;
+                            state.bus.$emit('packageOpen', pack.items);
+                            pack.items = state.structsList;
+                            pack.offset = state.viewOffset;
+                            state.currentPackage = pack;
+                            state.bus.$once('packageOpened', () => {
+                                state.draft = storage.isUpdated();
+                            });
+                        },
+                        setPackages(state, packages) {
+                            if (Array.isArray(packages)) {
+                                state.packages = packages;
+                            }
+                        }
+                    },
+                    actions: {},
+                    getters: {}
+                });
+                return store;
+            }
+
+            (this.$options||{}).store=this.$store=createStore();
+            let that=this;
+            const AgentAppPopup = Vue.component('AgentAppPopup', {
+                'extends': Popup,
+                created() {
+                    this.$store = createStore();
+                    if (!this.$el) {
+                        //let root = document.getElementById('agent-center-app-root-elem');
+                        let root = document.getElementById(tmpid);
+                        root = (root || document.body).appendChild(document.createElement('div'));
+                        this.$mount(root);
+                    }
+                },
+                watch:{
+                    content:{
+                        immediate: true,
+                        handler(val){
+                            let hasWatch=that.$store.state.hasWatch;
+                            if(hasWatch){
+                                if(val == ''){
+                                    this.display='none';
+                                }else{
+                                    this.display={};
+                                }
+                            }
+
+                        }
+                    }
+                }
+            });
+
+            Vue.component('AgentAppModal', {
+                'extends': AgentAppPopup,
+                props: {
+                    modal: {
+                        type: Boolean,
+                        default: true
+                    },
+                    animationDuration: {
+                        type: String,
+                        default: '300ms'
+                    }
+                }
+            });
+
+            Vue.component('AgentAppTips', {
+                'extends': AgentAppPopup,
+                props: {
+                    position: {
+                        type: Object,
+                        default: () => ({top: 70})
+                    },
+                    message: {
+                        type: String,
+                        default: ''
+                    },
+                    icon: {
+                        type: String,
+                        default: ''
+                    },
+                    minHeight: {
+                        type: String,
+                        default: '10px'
+                    },
+                    zIndex: {
+                        type: Number,
+                        default: 3000
+                    }
+                },
+                watch: {
+                    content() {
+                        this.setContent();
+                    },
+                    icon() {
+                        this.setContent();
+                    }
+                },
+                methods: {
+                    setContent() {
+                        let {content, icon, maxWidth, maxHeight, minWidth, minHeight, padding, textAlign} = this;
+                        this.html = `
+                    <div class="app-tips-wrap" style="max-width:${maxWidth};max-height:${maxHeight};min-width:${minWidth};min-height:${minHeight};padding:${padding};text-align:${textAlign}">
+                        ${icon ? `<i class="app-tips-icon icon-${icon}"></i>` : ''}
+                        <div class="app-tips-txt">${content}</div>
+                    </div>`;
+                    }
+                },
+                mounted() {
+                    this.setContent();
+                }
+            });
+
+        },
         data() {
             let {header, gridLine, gridRuleLine, freeDrop} = this.$props;
             return {
@@ -589,6 +614,7 @@
                 if (!this.editable) {
                     return Promise.resolve('');
                 }
+                let id= this.id;
                 const tips = new (Vue.component('AgentAppTips'))({
                     data: {
                         content: '保存中',
@@ -640,13 +666,13 @@
                         }
                     }
                 }
-                bus.$emit('refreshItems', changed);
+                this.$store.state.bus.$emit('refreshItems', changed);
                 return this;
             }
         },
-
         created() {
             let fetch = this.fetch,
+                id= this.id,
                 tips = new (Vue.component('AgentAppTips'))({
                     data: {
                         icon: 'load',
@@ -681,6 +707,7 @@
         },
 
         mounted() {
+            let bus = this.$store.state.bus;
             bus.$on('openPackage', (pack) => {
                 this.setPackage(pack);
                 this.index = false;
@@ -712,8 +739,8 @@
         },
 
         beforeDestroy() {
-            bus.$off();
-            clearState(this.$store.state);
+            this.$store.state.bus.$off();
+            clearState(this.$store.state,true);
         }
 
     }

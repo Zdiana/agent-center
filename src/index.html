@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>远传 · 座位图绘制</title>
+    <title>座位图绘制</title>
 </head>
 <body>
 
@@ -10,7 +10,12 @@
 
 <script>
     var app = new (Vue.component('AgentAppMaker'))({
-        el: '#app',
+        el: document.getElementById('app').appendChild(document.createElement('div')),
+        props:{
+            id:{
+                default:'bbbbbbbbbbb'
+            }
+        },
         data: {
             // 获取数据的回掉函数
             fetch: function (resolve, reject) {

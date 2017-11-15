@@ -22,7 +22,7 @@
 
 <script>
 
-    import bus from '../commons/bus';
+//    import bus from '../commons/bus';
 
     export default {
 
@@ -36,7 +36,7 @@
                     return;
                 }
                 this.zooming = true;
-                bus.$emit('focusSelection');
+                this.$store.state.bus.$emit('focusSelection');
                 setTimeout(() => {
                     this.zooming = false;
                 }, (parseInt(this.$props.zoomDuration, 10) || 0) + 60);
@@ -47,7 +47,7 @@
                     return;
                 }
                 this.zooming = true;
-                bus.$emit('zoom', false);
+                this.$store.state.bus.$emit('zoom', false);
                 setTimeout(() => {
                     this.zooming = false;
                 }, (parseInt(this.$props.zoomDuration, 10) || 0) + 60);
@@ -58,7 +58,7 @@
                     return;
                 }
                 this.zooming = true;
-                bus.$emit('zoom', true);
+                this.$store.state.bus.$emit('zoom', true);
                 setTimeout(() => {
                     this.zooming = false;
                 }, (parseInt(this.$props.zoomDuration, 10) || 0) + 60);
@@ -78,9 +78,9 @@
                 }
                 this.zooming = true;
                 if (delta > 0) {
-                    bus.$emit('zoomInToPoint', {x, y}, event);
+                    this.$store.state.bus.$emit('zoomInToPoint', {x, y}, event);
                 } else if (delta < 0) {
-                    bus.$emit('zoomOutToPoint', {x, y}, event);
+                    this.$store.state.bus.$emit('zoomOutToPoint', {x, y}, event);
                 }
                 setTimeout(() => {
                     this.zooming = false;

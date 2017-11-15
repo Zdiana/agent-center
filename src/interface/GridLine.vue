@@ -80,7 +80,7 @@
 <script>
 
     import _ from 'lodash';
-    import bus from '../commons/bus';
+//    import bus from '../commons/bus';
     import {mapState} from 'vuex'
 
     let cellWidth = 10.5;
@@ -212,7 +212,7 @@
             this.setCellWidth(this.ratio);
 
             this.coordsMap = {};
-
+            let bus = this.$store.state.bus;
             bus.$on('reset', () => {
                 this.coordsMap = {};
             }).$on('addStruct', (struct) => {
@@ -283,6 +283,7 @@
             },
 
             setCellWidth(ratio) {
+                let bus = this.$store.state.bus;
                 bus.cellWidth = cellWidth = [10.5, 10.5, 20.5, 30.5][ratio || this.ratio];
                 let {left, top} = this.viewOffset;
                 this.setCurOffset({left, top});
@@ -324,7 +325,7 @@
                         left, top, width, height, w, h
                     });
                     this.setCoordsMap(selection);
-                    bus.$emit('newSelectionMade', [item]);
+                    this.$store.state.bus.$emit('newSelectionMade', [item]);
                 }
                 return valid;
             },
@@ -353,6 +354,7 @@
                         }
                     }
                 }
+                let bus = this.$store.state.bus;
                 bus.$once('attrValidate', attr => {
                     if (attr) {
                         attr.w = w;
@@ -551,7 +553,7 @@
             setRatio(ratio, silent) {
 
                 if (ratio > 3 || ratio < 1 || ratio === this.ratio) {
-                    bus.$emit('ratioNoChange');
+                    this.$store.state.bus.$emit('ratioNoChange');
                     return;
                 }
 
@@ -581,7 +583,7 @@
                 this.$store.commit('setRatio', ratio);
 
                 if (!silent) {
-                    bus.$emit('refresh');
+                    this.$store.state.bus.$emit('refresh');
                 }
             },
 
@@ -679,7 +681,7 @@
                         box = {...box, ...this.convertToRatio(box, this.getCellWidth(ratio) / this.getCellWidth(prevRatio), true)};
                         this.focusViewBox(box, point);
                         this.setCurOffset({animate: false});
-                        bus.$emit('refresh');
+                        this.$store.state.bus.$emit('refresh');
                         this.setCurOffset({animate: true});
                     } else {
                         this.focusViewBox(box, point);
@@ -783,9 +785,9 @@
                     this.resetCoordsMap();
 
                     if (copy) {
-                        bus.$emit('makeNewSelection', newSelectionList);
+                        this.$store.state.bus.$emit('makeNewSelection', newSelectionList);
                     } else {
-                        bus.$emit('refresh');
+                        this.$store.state.bus.$emit('refresh');
                     }
 
                 } else if (items) {

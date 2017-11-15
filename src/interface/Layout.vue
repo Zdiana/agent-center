@@ -46,8 +46,7 @@
 
 <script>
 
-    import bus from '../commons/bus';
-
+//    import bus from '../commons/bus';
     export default {
 
         name: 'Layout',
@@ -110,11 +109,12 @@
             },
 
             layoutChange() {
-                bus.$emit('layoutChange');
+                this.$store.state.bus.$emit('layoutChange');
             }
         },
 
         mounted() {
+            let bus = this.$store.state.bus;
             bus.$on('packageOpened', () => {
                 this.setLayoutStyle();
             });

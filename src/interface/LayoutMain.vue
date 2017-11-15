@@ -30,8 +30,7 @@
 
     import GridLine from './GridLine.vue';
     import SVGSurface from './SVGSurface.vue';
-    import bus from '../commons/bus';
-
+//    import bus from '../commons/bus';
     export default {
 
         name: 'LayoutMain',
@@ -90,7 +89,7 @@
         },
 
         mounted() {
-
+            let bus = this.$store.state.bus;
             bus.$on('toolboxDragging', ({offset, event, item}) => {
                 let current = event.coords.current;
                 this.$refs.grid.setMousePosition({

@@ -29,8 +29,7 @@
 
     import ScrollBar from './ScrollBar.vue';
     import Draggable from './Draggable.vue';
-    import bus from '../commons/bus';
-
+//    import bus from '../commons/bus';
     import _ from 'lodash';
 
     const toolItems = [{
@@ -201,7 +200,6 @@
         }]
     }];
 
-    bus.defaultItems = _.cloneDeep(toolItems);
 
     export default {
 
@@ -221,6 +219,7 @@
         components: {ScrollBar, Draggable},
 
         data() {
+            this.$store.state.bus.defaultItems = _.cloneDeep(toolItems);
             return {
                 scrollElemStyle: {}
             }
@@ -306,7 +305,7 @@
                 img.style.top = offset.top + 'px';
                 img.src = this.getImgSrc(item.src, 'main');
                 document.body.appendChild(img);
-                bus.$emit('toolboxDragStart', {
+                this.$store.state.bus.$emit('toolboxDragStart', {
                     item,
                     event,
                     offset
@@ -319,7 +318,7 @@
                     document.body.removeChild(img);
                     this.shadowImage = null;
                     item = _.cloneDeep(item);
-                    bus.$emit('toolboxDragEnd', {
+                    this.$store.state.bus.$emit('toolboxDragEnd', {
                         event,
                         item: {...item, src: this.getImgSrc(item.src, 'main')},
                         offset: this.getOffset(event.coords)
@@ -329,7 +328,7 @@
 
             dragCancel(event, item) {
                 item = _.cloneDeep(item);
-                bus.$emit('toolboxDragCancel', {
+                this.$store.state.bus.$emit('toolboxDragCancel', {
                     event,
                     item: {...item, src: this.getImgSrc(item.src, 'main')},
                     offset: this.getOffset(event.coords)
@@ -343,7 +342,7 @@
                         style = this.shadowImage.style;
                     style.left = offset.left + 'px';
                     style.top = offset.top + 'px';
-                    bus.$emit('toolboxDragging', {
+                    this.$store.state.bus.$emit('toolboxDragging', {
                         item,
                         event,
                         offset

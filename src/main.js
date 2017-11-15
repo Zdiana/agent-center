@@ -4,6 +4,9 @@ import App from './interface/App.vue';
 const AgentMaker = Vue.component('AgentAppMaker', {
     extends: App,
     props: {
+        id: {
+            default:'myAgentAppMaker'
+        },
         editable: {
             default: true
         },
@@ -51,8 +54,11 @@ const AgentMaker = Vue.component('AgentAppMaker', {
 const AgentRender = Vue.component('AgentAppRender', {
     extends: App,
     props: {
+        id:{
+            default:'myAgentAppRender'
+        },
         title: {
-            default: '远传 · 座位图'
+            default: '座位图'
         },
         movable: {
             default: false

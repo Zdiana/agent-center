@@ -23,7 +23,7 @@
 <script>
 
     import _ from 'lodash';
-    import bus from '../commons/bus';
+//    import bus from '../commons/bus';
     import {SVG} from '../commons/svg';
 
     import Snap from 'snapsvg';
@@ -96,7 +96,7 @@
                     }
                 }
                 selection.selectedItems = [];
-                bus.$emit('refresh');
+                this.$store.state.bus.$emit('refresh');
             },
 
             resize(minRect) {
@@ -220,7 +220,7 @@
                         this.setTransform(item, tAttr.value || {}, tAttr.detail || {})
                             .then(() => {
                                 if (item.radian !== void 0) {
-                                    let cellWidth = bus.cellWidth || 10.5;
+                                    let cellWidth = this.$store.state.bus.cellWidth || 10.5;
                                     this.changeAttr(item, {
                                             angle: item.angle,
                                             radian: item.radian,
@@ -268,7 +268,7 @@
                         .then(() => {
                             let {radian, angle} = attr.value;
                             if (radian !== void 0) {
-                                let cellWidth = bus.cellWidth || 10.5;
+                                let cellWidth = this.$store.state.bus.cellWidth || 10.5;
                                 this.changeAttr(struct, {
                                     angle: angle,
                                     radian: radian,
@@ -282,7 +282,7 @@
                 this.addStruct(struct);
 
                 if (!silent) {
-                    bus.$emit('refresh');
+                    this.$store.state.bus.$emit('refresh');
                 }
 
                 return struct;
@@ -440,7 +440,7 @@
             },
 
             initElementItems(items) {
-                let defaultItems = bus.defaultItems,
+                let defaultItems = this.$store.state.bus.defaultItems,
                     item, dItem, name, attrs;
                 for (let i = 0, len = items.length; i < len; i++) {
                     item = items[i];
@@ -494,6 +494,7 @@
                     height: attr.height
                 });
                 bBox = cloned.getBBox();
+                let that = this;
                 return this.setTransform(clonedItem, attr, detail, false, bBox)
                     .then(() => {
                         item.fragment = clonedItem.fragment;
@@ -527,7 +528,7 @@
                             item.selection.changing = !!item.radian;
                         } else {
                             let {x: left, y: top, width, height} = cloned.getBBox();
-                            bus.$once('attrValidation', handler)
+                            that.$store.state.bus.$once('attrValidation', handler)
                                 .$emit('attrValidate', {
                                     left, top, width, height, radian: attr.radian
                                 });
@@ -536,7 +537,7 @@
                     .catch(error => {
                         console.error(error);
                         cloned.destroy();
-                        bus.$emit('attrValidate', false);
+                        this.$store.state.bus.$emit('attrValidate', false);
                     });
             },
 
@@ -563,12 +564,15 @@
 
         mounted() {
             let {svg: el} = this.$refs,
-                {width, height} = this.getClientRect();
+                {width, height} = this.getClientRect(),
+                bus = this.$store.state.bus,
+                that = this;
             this.svg = new SVG({
                 width,
                 height,
                 el
             });
+
             bus.$on('reset', () => {
                 this.svg.empty();
             }).$on('hideSVGSurface', () => {
@@ -624,6 +628,7 @@
                     }
                 }
             }).$on('refreshItems', items => {
+
                 let cellWidth = bus.cellWidth;
                 for (let i = 0, item, attr, value; i < items.length; i++) {
                     item = items[i];
@@ -634,7 +639,9 @@
                         this.changeAttr(item, value, attr.detail, true);
                     }
                 }
+
                 if (items.length && this.titleTips) {
+                    that.$store.state.hasWatch=false;
                     this.titleTips.hide();
                 }
             });
